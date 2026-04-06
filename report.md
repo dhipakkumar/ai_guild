@@ -17,6 +17,8 @@
 ### **DATA CLEANING:**
 #### **Missing Value Handling:**
 ![1.png](resources/1.png)
+
+
 - This is ok here because:
   - speed = 0 → valid state
   - ignition = 0 → engine off
@@ -44,6 +46,8 @@ $$X_t = X_{t-1}$$
 | C     | 22-6  |
 - The formula which we will be using here is this:
 ![2.png](resources/2.png)
+
+
 ### **SPATIAL PROCESSING:**
 - For coordinate transformation we have used **lat/lon** which is spherical and distance transformation needs cartesian
 - And the second thing which we used is the code base is the **kd tree search cKDTree.query()**. We used this method because it is very fast for large spatial data.
@@ -55,6 +59,8 @@ $$X_t = X_{t-1}$$
 ### **FEATURE AGGREGATION:**
 - Aggregation is necessary because the model cant handle the time series directly so we need to convert it to fixed vectors first:
 ![3.png](resources/3.png)
+
+
 - This is the generalised form but ther eare some terminologies which also we defined for this aggregation which are:
 - **Sum features: from the codebase : run_hrs = sum(dt where ignition=1)**
 - **Mean features from the codebase : speed_mean = mean(speed)**
@@ -64,6 +70,8 @@ $$X_t = X_{t-1}$$
 ### **FEATURE STABILITY:**
 - The raw signals are noisy and they solution for this is to **aggregate them to reduce the noise**:
 ![4.png](resources/4.png)
+
+
 - Thus more the sample less the variance.
 ### **DATA LEAKAGE PREVENTION:**
 - As far as the submission.csv is concerned we know we are calculating the y = acons(fuel_consumptions) and so the **leakage happens if there is a direct or indirect info about y in x**.
@@ -75,8 +83,10 @@ $$X_t = X_{t-1}$$
 - We used **RFID like rfid_litres,rfid_litres_lag1**
 - **We use pure telemetry as well like run_hrs,dist_km,speed_mean** and we also added some event features and spatial features as well.
 ## **FEATURE ENGINEERING:**
-- When it comes to the feature engineering part…. Here we have basically converting the raw telemetry time series $X(t)$ to a fixed-length feature vector per shift $X_shift$
+- When it comes to the feature engineering part…. Here we have basically converting the raw telemetry time series $X(t)$ to a fixed-length feature vector per shift $X_{shift}$
 ![5.png](resources/5.png)
+
+
 - There are 6 core group of features which we are using in our codebase which are:
 1. Activity features
 2. Cycle / operational features
@@ -87,31 +97,51 @@ $$X_t = X_{t-1}$$
 - Will go through each one by one:
 ### 1. ACTIVITY FEATURES:
 ![6.png](resources/6.png)
+
+
 - And by all these features we can get one rough idea of the fuel that:
 ![7.png](resources/7.png)
+
+
 - Where alpha and beta are some constants.
 ### 2. CYCLE FEATURES:
 ![8.png](resources/8.png)
+
+
 - By this we can tell an intuition like: 
 ![9.png](resources/9.png)
+
+
 ### 3. SPATIAL FEATURES:
 ![10.png](resources/10.png)
+
+
 - this is the haul\_distance\_mean
 ![11.png](resources/11.png)
+
+
 - this is dump distance mean
 ![12.png](resources/12.png)
+
+
 - From these features we can give a intuition of the fuel as: 
 ![13.png](resources/13.png)
 ### 4. **MOTION+TERRAIN FEATURES:**
 - The four main features which are used in this category are: Cum\_climb\_m, Heading\_chg\_mean, alt\_mean, alt\_std, alt\_range, speed\_mean, speed\_std
 - And each are explained one by one below: 
 ![14.png](resources/14.png)
+
+
 #### 1. Cum\_climb\_m:
 - The physics which we use here is simple which is the fuel is directly proportional to the climb and we know  $U = mgh$  so more the climb more the fuel will be utilised
 ![15.png](resources/15.png)
+
+
 #### 2. Heading\_chg\_mean:
 - The key concept here is more turns means more brakeage or acceleration which will eventually lead to the usage of more fuel.
-![16.png](resouces/16.png)
+![16.png](resources/16.png)
+
+
 #### 3. speed\_mean, speed\_std:
 - Here the concept is simple which is smooth driving means less fuel and more speed variance means usage of more fuel.
 ### 5. **RATIO/NORMALISED FEATURES:**
@@ -251,6 +281,102 @@ out["dist_per_tankcap"] = out["dist_km"].astype(float) / (tc + 1e-6)
 ```
 - normalises distance by tank capacity from fleet.csv - helps the model account for vehicle size differences across the fleet.
 ## Cycle segmentation methodology:
+# Cycle Segmentation Methodology
+- the problem here is pretty straightforward - we need to know when a dump actually happened. a haul cycle is Load → Travel → Dump, and counting those cycles per shift is one of the most direct fuel-relevant signals we have. more cycles = more productive work done.
+- we have two approaches for this depending on what data is available for that vehicle, and they both run on every shift - the model then gets both signals and decides which to trust.
+---
+### Approach 1 - analog dump switch signal (March onwards)
+- the hardware dump switch fires `analog_input_1 > 2.5` when material is discharged. available from march 1st onward for select dumpers only.
+- two features come out of this:
+```python
+analog = pd.to_numeric(df["analog_input_1"], errors="coerce").fillna(0.0)
+df["dump_analog_high"] = (analog > ANALOG_DUMP_THRESH).astype(np.float64)
+analog_high = df["dump_analog_high"].values
+prev_high = np.concatenate([[0.0], analog_high[:-1]])
+same_veh = np.concatenate([[False], df["vehicle"].values[1:] == df["vehicle"].values[:-1]])
+df["dump_analog_edge"] = ((analog_high > 0.5) & (prev_high < 0.5) & same_veh).astype(np.float64)
+```
+- `dump_analog_high` - total rows where signal is high (raw count of high signal duration)
+- `dump_analog_edge` - rising edge only, i.e the 0→1 transition. this is the actual dump event count, not the sustained signal. `same_veh` makes sure we dont count a rising edge at the boundary between two different vehicles in the sorted dataframe
+- `has_dump_signal = (dump_events > 0)` - flag that tells the model whether the analog signal is even present for this shift
+---
+### Approach 2 - FSM cycle detection (fallback for Jan/Feb and no-switch vehicles)
+- for the historical data where the analog switch wasnt available we infer dump visits from GPS geometry + kinematics. this is the finite state machine approach.
+- the FSM uses distance to the `ob_dump` layer (from GPKG) + speed + ignition to determine whether a dumper is inside a dump zone and has dwelled long enough to count as a real dump visit.
+- constants controlling the FSM behaviour:
+```python
+FSM_DUMP_ENTER_M = 32.0    # enter dump corridor when within 32m of ob_dump layer
+FSM_DUMP_EXIT_M = 52.0     # exit only when beyond 52m (hysteresis, prevents flickering)
+FSM_DUMP_SLOW_MAX_KPH = 4.0  # must be moving slower than 4kph to count as dwelling
+FSM_DUMP_MIN_DWELL_S = 40.0  # must dwell for at least 40s to qualify as a real dump
+```
+- the hysteresis gap (32m enter, 52m exit) is intentional - without it a vehicle hovering at the boundary would flicker in and out of the zone on every GPS ping and generate false cycles.
+- the core FSM loop runs row by row in time order per vehicle:
+```python
+for i in range(n):
+    di = dist_dump_m[i]
+    if np.isfinite(di):
+        if not inside and di <= enter_m:
+            inside = True
+        elif inside and di > exit_m:
+            inside = False
+    if prev_inside and not inside:
+        if qualified:
+            cycle_complete_edge[i] = 1.0
+        qualified = False
+        dwell = 0.0
+    if inside and not prev_inside:
+        dwell = 0.0
+        qualified = False
+        geom_enter[i] = 1.0
+        if i > 0 and on_haul[i - 1] > 0.5:
+            haul_to_dump_arrival[i] = 1.0
+    slow = (speed_kph[i] < slow_max_kph) and (ignition[i] >= 0.5)
+    if inside:
+        if slow:
+            dwell += dt_s[i]
+            dwell_dt[i] = dt_s[i]
+        if dwell >= min_dwell_s:
+            qualified = True
+    if inside and qualified:
+        dump_qualified[i] = 1.0
+    prev_inside = inside
+```
+- states the FSM tracks: outside zone / inside zone / qualified (dwelled long enough). a cycle is only counted (`cycle_complete_edge = 1`) when the vehicle exits after having qualified - not just any exit.
+- `haul_to_dump_arrival` fires when the vehicle enters the dump zone from a haul road point - i.e it actually came from the haul road, not from a workshop or parking area. this filters out false entries.
+- `apply_fsm_dump_features` runs this per contiguous vehicle block in the sorted dataframe:
+```python
+while start < n:
+    v = veh[start]
+    end = start + 1
+    while end < n and veh[end] == v:
+        end += 1
+    sl = slice(start, end)
+    ce, ddt, g, h, q = fsm_dump_visit_arrays(dist[sl], spd[sl], ign[sl], dt[sl], haul[sl])
+    cyc[sl]=ce; dw[sl]=ddt; ge[sl]=g; ha[sl]=h; dq[sl]=q
+    start = end
+```
+---
+### aggregation to shift level
+- both approaches produce per-row signals that then get aggregated into the `agg_kw` dict:
+```python
+dump_count=("dump_analog_high","sum"),
+dump_events=("dump_analog_edge","sum"),
+fsm_dump_cycles=("fsm_dump_cycle_edge","sum"),
+fsm_dump_dwell_hrs=("fsm_dump_dwell_dt", lambda x: x.sum()/3600),
+fsm_enter_dump_geom=("fsm_dump_geom_enter","sum"),
+fsm_arrival_haul_dump=("fsm_haul_to_dump_arrival","sum"),
+frac_fsm_dump_qualified=("fsm_dump_qualified","mean"),
+near_dump_slow_frac=("near_dump_slow","mean"),
+```
+- `fsm_dump_dwell_hrs` - total hours spent slow inside dump zone. directly related to loading/unloading time per shift.
+- `frac_fsm_dump_qualified` - fraction of time inside dump zone after qualifying. high = long dwell times relative to total dump zone time.
+- `near_dump_slow_frac` - fraction of all GPS pings that are slow AND near dump zone. a softer spatial proxy that doesnt require the full FSM qualification.
+---
+### how the two approaches interact in the model
+- `has_dump_signal` tells the model which signal is trustworthy for a given shift. when its 1, analog edge count (`dump_events`) is the reliable cycle count. when its 0 (jan/feb or no-switch vehicle), the FSM cycles take over.
+- both sets of features go into feat_cols so the model can learn to weight them appropriately based on context rather than us hardcoding the logic.
+- the per-vehicle efficiency in the dumper efficiency component also uses `dumper_mean_dump_events` and `dumper_mean_fsm_cycles` separately, so the model can track historical cycle rates per vehicle using whichever signal was available during training.
 ## Daily fuel consistency:
 # **KEY FINDINGS & INSIGHTS:**
 # **REFERENCES & TOOLS USED:**
