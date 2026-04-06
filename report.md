@@ -8,6 +8,15 @@
 # **PROBLEM UNDERSTANDING:**
 # **DATASET OVERVIEW:**
 # **METHODOLOGY:**
+## **DATA PREPROCESSING:**
+- For the data processing the bigger picture which we tired out is that
+- The math behind it is simple which is given below:
+- <ins>**Xraw​(t)→Xclean​(t)→ϕ(X(t))→Xshift**</ins>
+- **RAW PARQUET → CLEAN → TIME ALIGN → SPATIAL MAP → SIGNAL EXTRACTION → AGGREGATE → FEATURES**
+- First as we have the raw data we will be cleaning it …. Data cleaning is the important step in this:
+### **DATA CLEANING:**
+#### **Missing Value Handling:**
+(resources/1.png)
 # **SECONDARY OUTPUTS:**
 ## Route level fuel benchmarking:
 - The core idea behind this is to: **“separate what the route costs from what the dumper/operator costs”**. If we manage to find the fuel consumed for a route independent of the vehicle traversing we could give a better estimate as to how much fuel was consumed as the vehicle took that route.
@@ -56,7 +65,10 @@
         - haul\_net\_lift_pos: this is irrecoverable energy ie. the energy spent climbing 80m is all burned as fuel. but the net positive lift assuming 20m represents the route's permanent elevation gain across the shift which is energy that had to be spent and could never come back even in theory.
     
     7. route benchmark table: `build_route_benchmarks()` function represents combining all of the data from the above steps.
-## Dumper Efficiency Component: 
+## Dumper Efficiency Component:
+- The goal of this component is to separate dumper/operator inefficiency from route-level fuel cost.
+1. Build a per-dumper baseline profile (training data only):
+   - 
 ## Cycle segmentation methodology:
 ## Daily fuel consistency:
 # **KEY FINDINGS & INSIGHTS:**
