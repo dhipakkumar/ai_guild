@@ -17,6 +17,19 @@
 ### **DATA CLEANING:**
 #### **Missing Value Handling:**
 ![1.png](resources/1.png)
+- This is ok here because:
+  - speed = 0 → valid state
+  - ignition = 0 → engine off
+  - distance = 0 → no movement
+#### **Interpolation:**
+- This line in the code base: 
+```python
+df.groupby("vehicle")[coord].transform(lambda x: x.interpolate(limit=5))
+```
+- This is the one which helps in the interpolation process and the concept for this is just simple addition finding the variable xt   with the help of xt-1  and xt+1  which is this formula:
+$$
+X\_t = X\_{t-1} + (X\_{t+1}+X\_{t-1})/2
+$$
 # **SECONDARY OUTPUTS:**
 ## Route level fuel benchmarking:
 - The core idea behind this is to: **“separate what the route costs from what the dumper/operator costs”**. If we manage to find the fuel consumed for a route independent of the vehicle traversing we could give a better estimate as to how much fuel was consumed as the vehicle took that route.
