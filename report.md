@@ -49,10 +49,12 @@
     this is for the cluster formation for the routes using the previously found data.
     refer this line for more info!!!!!
     and eventually after this clustering of the route leads to a df having every shift row in both train and test a `route_enc` col which ranges from 0 to 19 because of how KMeans works !!!! explain more about this too 
+    
     6. physics benchmarking: instead of the approach of simple averaging we use ols (ordinary least squares). this answers the question of "If a perfectly efficient dumper ran this exact shift — no idling, no aggressive driving, no mechanical inefficiency then how much fuel would the terrain itself demand?" this is the purely physics problem and we use the following data:
         - dist_km which would be a function of the rolling resistance and also relates the fuel consumed.
         - haul\_cum\_climb_m: work done against gravity (computed from the 3d gpkg elevation data for each ts to each gps point.)
         - haul\_net\_lift_pos: this is irrecoverable energy ie. the energy spent climbing 80m is all burned as fuel. but the net positive lift assuming 20m represents the route's permanent elevation gain across the shift which is energy that had to be spent and could never come back even in theory.
+    
     7. route benchmark table: `build_route_benchmarks()` function represents combining all of the data from the above steps.
 ## Dumper Efficiency Component: 
 ## Cycle segmentation methodology:
