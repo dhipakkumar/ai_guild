@@ -16,7 +16,7 @@
 - First as we have the raw data we will be cleaning it …. Data cleaning is the important step in this:
 ### **DATA CLEANING:**
 #### **Missing Value Handling:**
-(resources/1.png)
+![1.png](resources/1.png)
 # **SECONDARY OUTPUTS:**
 ## Route level fuel benchmarking:
 - The core idea behind this is to: **“separate what the route costs from what the dumper/operator costs”**. If we manage to find the fuel consumed for a route independent of the vehicle traversing we could give a better estimate as to how much fuel was consumed as the vehicle took that route.
