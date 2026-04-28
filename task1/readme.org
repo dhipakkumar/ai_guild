@@ -1,0 +1,7 @@
+#+title: Readme
+* now look before you say anything ik i should submit the .ipynb file like a norm but org is wayyyy better and i would also recommend you to use that
+- so the main reason why im using org is because im familiar with this and ipynb is almost the same as this but like normal and in the case of org its ipynb but on steroids
+- i'll try to keep it as understandable as possible i swear.
+- the /task1's/ org file is present as notebook.org
+- hopefully you wont be running individual cells 💀 +i hope you dont run them individually cause that would be a pain in the ass for both of us+
+- thank you
