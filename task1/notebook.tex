@@ -1,0 +1,55 @@
+% Created 2026-04-29 Wed 00:13
+% Intended LaTeX compiler: pdflatex
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\author{crypticwrath77}
+\date{\today}
+\title{Notebook for task1}
+\hypersetup{
+ pdfauthor={crypticwrath77},
+ pdftitle={Notebook for task1},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={},
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Checkpoint 1:}
+\label{sec:orgef73442}
+\begin{itemize}
+\item just importing stuff that might be required\ldots{}
+\end{itemize}
+
+\begin{verbatim}
+from pathlib import Path
+import pandas as pd
+import matplotlib.pyplot as plt
+DATA_DIR = Path("UCI_HAR_Dataset")
+\end{verbatim}
+
+\begin{verbatim}
+features = pd.read_csv(
+    "UCI_HAR_DATASET/features.txt",
+    sep=r"\s+",
+    header=None,
+    names=["feature_id", "feature_name"],
+    engine="python"
+)
+
+print(features.tail())
+\end{verbatim}
+\end{document}

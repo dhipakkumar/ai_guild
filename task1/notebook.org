@@ -1,8 +1,6 @@
 #+title: Notebook for task1
 #+author: crypticwrath77
-#+property: header-args:python :python /Users/dkr/Desktop/clg/sem4/ai_guild/ai_guild_git/.venv/bin/python
-#+PROPERTY: header-args:python :session py
-
+#+PROPERTY: header-args:python :python /Users/dkr/Desktop/clg/sem4/ai_guild/ai_guild_git/.venv/bin/python :session py :results output replace
 * Checkpoint 1:
 - just importing stuff that might be required...
 
@@ -13,7 +11,9 @@ import matplotlib.pyplot as plt
 DATA_DIR = Path("UCI_HAR_Dataset")
 #+end_src
 
-#+begin_src python :results output
+#+RESULTS:
+
+#+begin_src python
 features = pd.read_csv(
     "UCI_HAR_DATASET/features.txt",
     sep=r"\s+",
