@@ -10,4 +10,25 @@
 from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
+DATA_DIR = Path("UCI_HAR_Dataset")
 #+end_src
+
+#+begin_src python :results output
+features = pd.read_csv(
+    "UCI_HAR_DATASET/features.txt",
+    sep=r"\s+",
+    header=None,
+    names=["feature_id", "feature_name"],
+    engine="python"
+)
+
+print(features.tail())
+#+end_src
+
+#+RESULTS:
+:      feature_id                          feature_name
+: 556         557      angle(tBodyGyroMean,gravityMean)
+: 557         558  angle(tBodyGyroJerkMean,gravityMean)
+: 558         559                  angle(X,gravityMean)
+: 559         560                  angle(Y,gravityMean)
+: 560         561                  angle(Z,gravityMean)
