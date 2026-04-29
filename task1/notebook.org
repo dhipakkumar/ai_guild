@@ -14,22 +14,58 @@ DATA_DIR = Path("UCI_HAR_Dataset")
 #+RESULTS:
 
 #+begin_src python
-features = pd.read_csv(
-    "UCI_HAR_DATASET/features.txt",
+activity_labels = pd.read_csv(
+    DATA_DIR / "activity_labels.txt",
     sep=r"\s+",
     header=None,
-    names=["feature_id", "feature_name"],
-    engine="python"
+    names=["id", "activity"]
 )
 
-print(features.tail())
+y_train = pd.read_csv(
+    DATA_DIR / "train" / "y_train.txt",
+    header=None,
+    names=["activity_id"]
+)
+
+acc_x = pd.read_csv(
+    DATA_DIR / "train" / "Inertial Signals" / "total_acc_x_train.txt",
+    sep=r"\s+",
+    header=None
+)
+
+acc_y = pd.read_csv(
+    DATA_DIR / "train" / "Inertial Signals" / "total_acc_y_train.txt",
+    sep=r"\s+",
+    header=None
+)
+acc_z = pd.read_csv(
+    DATA_DIR / "train" / "Inertial Signals" / "total_acc_z_train.txt",
+    sep=r"\s+",
+    header=None
+)
+fig, axes = plt.subplots(3, 2, figsize=(14, 10))
+axes = axes.ravel()
+
+for i, row in activity_labels.iterrows():
+    activity_id = row["id"]
+    activity_name = row["activity"]
+
+    idx = y_train[y_train["activity_id"] == activity_id].index[0]
+
+    axes[i].plot(acc_x.iloc[idx], label="x")
+    axes[i].plot(acc_y.iloc[idx], label="y")
+    axes[i].plot(acc_z.iloc[idx], label="z")
+
+    axes[i].set_title(activity_name)
+    axes[i].set_xlabel("Sample number")
+    axes[i].set_ylabel("Acceleration (g)")
+    axes[i].legend()
+
+plt.suptitle("raw", fontsize=16)
+plt.tight_layout()
+plt.savefig("raw_acc_window_per_activity.png", dpi=200)
+plt.show()
 #+end_src
 
-#+begin_example
-:      feature_id                          feature_name
-: 556         557      angle(tBodyGyroMean,gravityMean)
-: 557         558  angle(tBodyGyroJerkMean,gravityMean)
-: 558         559                  angle(X,gravityMean)
-: 559         560                  angle(Y,gravityMean)
-: 560         561                  angle(Z,gravityMean)
-#+end_example
+
+[[file:raw_acc_window_per_activity.png]]
