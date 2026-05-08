@@ -69,9 +69,9 @@ plt.show()
 
 
 [[file:raw_acc_window_per_activity.png]]
- visually similar:
+visually similar:
 1. *sitting* and *standing*
 2. *walking*, *walking upstairs* and *walking downstairs* look not really similar but they appear to be periodic functions
-- different:
+different:
 1. laying is way too different when compared to the others.
 2. also static type of activities are different when compared to the dynamic motions like sitting, standing, laying are different when compared to the three types of walking motions.
