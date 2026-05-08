@@ -1,3 +1,5 @@
 .venv/
 .DS_Store
 task1/UCI_HAR_Dataset*
+task1/notebook.pdf
+task1/notebook.tex
